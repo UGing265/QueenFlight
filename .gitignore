@@ -1,0 +1,38 @@
+# --- OS & IDEs ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- Backend (.NET) ---
+[Bb]in/
+[Oo]bj/
+.vs/
+*.user
+*.suo
+*.userprefs
+ncrunch-project.xml
+_ReSharper.*/
+# Ignore sensitive config (User should use UserSecrets or Env Vars)
+appsettings.Development.json
+appsettings.Local.json
+
+# --- Frontend (Node/Next.js) ---
+node_modules/
+/frontend/.next/
+/frontend/dist/
+/frontend/out/
+/frontend/build/
+.env
+.env*.local
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# --- Artifact Areas ---
+.gemini/
+.agent/memory/
