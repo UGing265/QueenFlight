@@ -112,6 +112,4 @@ Visit http://localhost:3000 to view the application.
 
 ## Author
 
-**Designed & Developed by [Shiroru Thai]**
-
-> *This project is a Proof of Concept (MVP) for educational purposes.*
+**Designed & Developed by Shiroru Thai**
