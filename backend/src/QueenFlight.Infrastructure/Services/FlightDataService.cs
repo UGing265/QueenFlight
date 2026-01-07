@@ -2,7 +2,6 @@ using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.AspNetCore.SignalR;
 using Polly;
 using Polly.Retry;
 using QueenFlight.Core.Interfaces;
@@ -14,7 +13,6 @@ namespace QueenFlight.Infrastructure.Services;
 public class FlightDataService : BackgroundService
 {
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly ILogger<FlightDataService> _logger;
     private readonly ILogger<FlightDataService> _logger;
     private readonly IFlightCache _flightCache;
     private readonly IConfiguration _configuration;

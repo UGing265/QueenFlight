@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using QueenFlight.Infrastructure.Data;
 using QueenFlight.Infrastructure.Interfaces;
+using QueenFlight.Core.Interfaces;
 using QueenFlight.Infrastructure.Services;
 using StackExchange.Redis;
 
