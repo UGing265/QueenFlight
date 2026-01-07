@@ -103,7 +103,10 @@ public class FlightDataService : BackgroundService
                 return;
             }
 
+            var payloads = new List<QueenFlight.Core.DTOs.FlightPayloadDto>();
             int count = 0;
+            long timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
             foreach (var element in flightsElement.EnumerateArray())
             {
                 if (TryMapAirLabs(element, out var flight))
@@ -117,6 +120,17 @@ public class FlightDataService : BackgroundService
 
                     await _flightCache.SetFlightAsync(flight);
                     count++;
+                    
+                    // Map to DTO for broadcasting
+                    payloads.Add(new QueenFlight.Core.DTOs.FlightPayloadDto
+                    {
+                        Icao24 = flight.Icao24,
+                        Lat = (double)flight.Latitude,
+                        Lng = (double)flight.Longitude,
+                        Velocity = (float)flight.Velocity, // Assuming km/h or appropriate unit
+                        Heading = (float)flight.TrueTrack,
+                        ServerTimestamp = timestamp
+                    });
                 }
             }
 
@@ -124,6 +138,13 @@ public class FlightDataService : BackgroundService
 
             // Broadcast to SignalR via Interface
             await _broadcaster.BroadcastFlightCountAsync(count);
+            
+            // Broadcast full payload list
+            if (payloads.Count > 0)
+            {
+                 await _broadcaster.BroadcastFlightDataAsync(payloads);
+                 _logger.LogInformation($"📡 Broadcasted {payloads.Count} flight payloads via SignalR.");
+            }
         }
         catch (OperationCanceledException) { }
         catch (Exception ex)
