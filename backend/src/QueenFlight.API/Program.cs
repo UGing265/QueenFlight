@@ -1,5 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using QueenFlight.Infrastructure.Data;
+using QueenFlight.Infrastructure.Interfaces;
+using QueenFlight.Infrastructure.Services;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +12,15 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+// Register Worker Service
+builder.Services.AddHttpClient();
+builder.Services.AddHostedService<FlightDataService>();
+
+// Register Redis
+var redisConnection = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
+builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisConnection));
+builder.Services.AddSingleton<IFlightCache, RedisFlightCache>();
 
 var app = builder.Build();
 
