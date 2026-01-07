@@ -46,9 +46,9 @@ public class FlightDataService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("🚀 FlightDataService Started. Polling AirLabs every 120s...");
+        _logger.LogInformation("🚀 FlightDataService Started. Polling AirLabs every 600s...");
 
-        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(120));
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(600));
 
         // Run immediately on start
         try { await FetchAndProcessData(stoppingToken); } catch (Exception ex) { _logger.LogError(ex, "Initial fetch failed"); }
