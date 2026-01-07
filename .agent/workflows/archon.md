@@ -102,3 +102,6 @@ graph TD
 - **Tech**: NoSQL (Cassandra/DynamoDB) for scale vs SQL. Bloom Filter for quick lookups.
 - **Diagram**: Client -> LB -> Service -> Cache -> DB.
 - **Trade-off**: Eventual consistency is okay for analytics, but link redirection needs speed.
+
+## 7. Write it document
+**Write**: create a file new [be or fe][name].md at path @docs/mission
