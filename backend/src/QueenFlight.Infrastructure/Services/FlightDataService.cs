@@ -149,7 +149,7 @@ public class FlightDataService : BackgroundService
                 Latitude: GetFloat(el, "lat"),
                 BaroAltitude: GetFloat(el, "alt"),
                 OnGround: GetString(el, "status") == "ground", // Heuristic
-                Velocity: GetFloat(el, "speed"), // km/h or knots? AirLabs usually knots or km/h depending on params. Assuming standard.
+                Velocity: GetFloat(el, "speed"), // Unit: km/h (Confirmed by AirLabs)
                 TrueTrack: GetFloat(el, "dir"),
                 VerticalRate: GetFloat(el, "v_speed"),
                 GeoAltitude: null,
