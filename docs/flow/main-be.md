@@ -1,0 +1,1 @@
+Luồng dữ liệu mới: AirLabs -> Worker -> Redis -> SignalR Hub -> (Chờ Frontend kết nối).

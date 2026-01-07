@@ -2,8 +2,10 @@ using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.SignalR;
 using Polly;
 using Polly.Retry;
+using QueenFlight.Core.Interfaces;
 using QueenFlight.Core.Models;
 using QueenFlight.Infrastructure.Interfaces;
 
@@ -13,8 +15,10 @@ public class FlightDataService : BackgroundService
 {
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<FlightDataService> _logger;
+    private readonly ILogger<FlightDataService> _logger;
     private readonly IFlightCache _flightCache;
     private readonly IConfiguration _configuration;
+    private readonly IFlightBroadcaster _broadcaster;
     
     private readonly AsyncRetryPolicy<HttpResponseMessage> _retryPolicy;
 
@@ -22,12 +26,14 @@ public class FlightDataService : BackgroundService
         IHttpClientFactory httpClientFactory, 
         ILogger<FlightDataService> logger, 
         IFlightCache flightCache,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IFlightBroadcaster broadcaster)
     {
         _httpClientFactory = httpClientFactory;
         _logger = logger;
         _flightCache = flightCache;
         _configuration = configuration;
+        _broadcaster = broadcaster;
 
         // Archon Resilience: Exponential Backoff for API stability
         _retryPolicy = Policy
@@ -117,6 +123,9 @@ public class FlightDataService : BackgroundService
             }
 
             _logger.LogInformation($"✅ AirLabs Snapshot: {count} valid flights synced to Redis.");
+
+            // Broadcast to SignalR via Interface
+            await _broadcaster.BroadcastFlightCountAsync(count);
         }
         catch (OperationCanceledException) { }
         catch (Exception ex)
