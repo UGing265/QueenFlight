@@ -3,4 +3,5 @@
 # 2. Paste the following content into it:
 
 NEXT_PUBLIC_MAPBOX_TOKEN=PASTE_YOUR_TOKEN_HERE
-NEXT_PUBLIC_API_URL=http://localhost:5000
+# Updated Port: Backend runs on 5026 (HTTP) by default
+NEXT_PUBLIC_API_URL=http://localhost:5026

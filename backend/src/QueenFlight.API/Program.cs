@@ -50,7 +50,8 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
+// auto redirect to https if not using https
+// app.UseHttpsRedirection();
 
 app.UseCors("ClientPermission");
 
