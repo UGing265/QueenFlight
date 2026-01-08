@@ -1,30 +1,37 @@
 # Task: Real-time Broadcasting Service (SY-02)
 
-## 1. Internal Logic Flow (Luồng xử lý chi tiết [Logic Flow])
+## 1. Visual Logic Flow (Luồng xử lý hình ảnh hóa)
 
-### Activity: Broadcasting Cycle (Every 600s)
-1.  **Ingestion Start**: `FlightDataService` (Background Worker) wakes up on Timer tick.
-2.  **External Poll**: Service sends HTTP GET to **AirLabs API**.
-    *   *Retry Policy*: Uses Exponential Backoff (Poll -> Wait 2s -> Retry) on network failure.
-3.  **Data Parsing**:
-    *   Receives JSON response.
-    *   Iterates through `response` array.
-4.  **Transformation Logic (In-Memory)**:
-    *   **Filter**: Discards flights with missing `lat`, `lng`, `speed`, or `heading`.
-    *   **Mapping**: Converts Raw AirLabs JSON -> `FlightState` (Domain Entity).
-    *   **Persistence**: Saves valid entity to `RedisFlightCache`.
-    *   **DTO Mapped**: Simultaneously maps `FlightState` -> `FlightPayloadDto` (Optimized View Model).
-        *   `lat`, `lng` cast to `double`.
-        *   `velocity` cast to `float` (km/h).
-5.  **Broadcasting Event**:
-    *   Service invokes `IFlightBroadcaster.BroadcastFlightDataAsync(List<FlightPayloadDto>)`.
-6.  **Infrastructure Adapter**:
-    *   `SignalRFlightBroadcaster` receives the DTO list.
-    *   Calls `HubContext.Clients.Group("GlobalFlightData").SendAsync("ReceiveFlightUpdate", payloads)`.
-7.  **Serialization**:
-    *   SignalR Pipeline uses `MessagePack` formatter to compress the List into a binary blob.
-8.  **Distribution**:
-    *   Binary blob is pushed via WebSockets to all subscribed Clients.
+```mermaid
+sequenceDiagram
+    participant Worker as 🤖 FlightDataService
+    participant AL as ☁️ AirLabs API
+    participant RC as 🧠 Redis Cache
+    participant Hub as 📡 SignalR Hub
+    participant Clients as 👥 Web Clients
+
+    Note over Worker: Timer Tick (Every 600s)
+    Worker->>AL: GET /flights?api_key=...
+    AL-->>Worker: JSON Response (Raw Flights)
+    
+    loop Filtering & Mapping
+        Worker->>Worker: Validate Data (Lat/Lng/Speed)
+        Worker->>RC: Save FlightState (Full Entity)
+        Worker->>Worker: Map to FlightPayloadDto (Compact)
+    end
+
+    Worker->>Hub: BroadcastFlightDataAsync(List<Dto>)
+    Note over Hub: Serialize to MessagePack (Binary)
+    Hub->>Clients: Push "ReceiveFlightUpdate" (Binary Blob)
+```
+
+### Data Journey (Hành trình dữ liệu)
+| Bước (Step) | Hoạt động (Activity) | Dữ liệu vào (Input) | Dữ liệu ra (Output) |
+| :--- | :--- | :--- | :--- |
+| **1. Ingestion** | Worker gọi API AirLabs để lấy dữ liệu thô. | `N/A` | `Raw JSON` |
+| **2. Processing** | Lọc bỏ máy bay lỗi, lưu vào Redis để tra cứu chi tiết sau này. | `Raw JSON` | `FlightState (Entity)` |
+| **3. Mapping** | Chuyển đổi Entity sang DTO siêu nhẹ để gửi đi. | `FlightState` | `FlightPayloadDto` |
+| **4. Transport** | SignalR nén dữ liệu thành Binary và gửi xuống Client. | `List<Dto>` | `Binary Blob` |
 
 ## 2. Architectural Rationale (Tại sao thiết kế như vậy? [Rationale])
 *   **Separation of Concerns**:
