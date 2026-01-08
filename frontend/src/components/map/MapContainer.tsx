@@ -31,8 +31,8 @@ export default function MapContainer() {
         map.current = new mapboxgl.Map({
             container: mapContainer.current,
             style: "mapbox://styles/mapbox/dark-v11",
-            center: [105.85, 21.02], // Hanoi
-            zoom: 6,
+            center: [106.79, 10.84], // hcm 
+            zoom: 10,
             projection: 'globe' // Globe view for aesthetic
         });
 
@@ -50,8 +50,12 @@ export default function MapContainer() {
 
     // 2. Update Markers when Flight Data changes
     useEffect(() => {
-        if (!map.current) return;
+        if (!map.current) {
+            console.warn("⚠️ Map not initialized yet, skipping marker update");
+            return;
+        }
 
+        console.log(`🗺️ Rendering markers for ${flightData.length} flights...`);
         const currentFlightIds = new Set<string>();
 
         flightData.forEach((flight) => {
@@ -61,14 +65,19 @@ export default function MapContainer() {
             let marker = markersRef.current.get(flight.icao24);
 
             if (!marker) {
+                // Debug log for first marker creation
+                if (markersRef.current.size === 0) {
+                    console.log(`📍 Creating first marker for ${flight.icao24} at [${flight.lng}, ${flight.lat}]`);
+                }
+
                 // Create new marker element
                 const el = document.createElement('div');
                 el.className = 'flight-marker';
-                el.style.backgroundImage = 'url(https://upload.wikimedia.org/wikipedia/commons/2/25/Plane_icon.svg)'; // Quick placeholder
-                // Or better: Use an SVG icon we inject
-                el.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h20"/><path d="M13 2l9 10-9 10"/><path d="M7 6l4 6-4 6"/></svg>`; // Just a simple arrow/plane
+                // Explicitly set size here just in case CSS fails
+                el.style.width = '24px';
+                el.style.height = '24px';
 
-                // Fix rotation: We need to rotate the icon itself, consistent with Heading
+                el.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 0 4px #4ade80);"><path d="M2 12h20"/><path d="M13 2l9 10-9 10"/><path d="M7 6l4 6-4 6"/></svg>`;
 
                 marker = new mapboxgl.Marker({ element: el, rotation: flight.heading })
                     .setLngLat([flight.lng, flight.lat])
@@ -77,11 +86,13 @@ export default function MapContainer() {
 
                 markersRef.current.set(flight.icao24, marker);
             } else {
-                // Update position (Interpolation will happen here in next iteration)
+                // Update position
                 marker.setLngLat([flight.lng, flight.lat]);
                 marker.setRotation(flight.heading);
             }
         });
+
+        console.log(`✅ Total markers on map: ${markersRef.current.size}`);
 
         // Cleanup stale markers
         markersRef.current.forEach((marker, id) => {

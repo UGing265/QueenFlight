@@ -40,11 +40,25 @@ export function useFlightSignalR() {
                     // Subscribe to 'GlobalFlightData' group if required by Backend
                     connection.invoke("SubscribeToUpdates").catch((err) => console.error(err));
 
-                    connection.on("ReceiveFlightData", (data: FlightPayload[]) => {
+                    connection.on("ReceiveFlightData", (data: any[]) => {
                         // For high-frequency updates, we might want to avoid setState here directly
                         // But for 120s polling, this is fine.
-                        console.log(`✈️ Received ${data.length} flights`);
-                        setFlightData(data);
+                        if (data.length > 0) {
+                            console.log("📦 Sample Data Item:", data[0]);
+                        }
+
+                        // Mapping if needed (in case Backend sends different casing)
+                        const mappedData = data.map((d: any) => ({
+                            icao24: d.icao24 || d.Icao24,
+                            lat: d.lat || d.Lat,
+                            lng: d.lng || d.Lng,
+                            heading: d.heading || d.Heading,
+                            velocity: d.velocity || d.Velocity,
+                            serverTimestamp: d.serverTimestamp || d.ServerTimestamp
+                        }));
+
+                        console.log(`%c ✈️ Received ${mappedData.length} flights! (Sample: ${mappedData[0]?.icao24})`, 'background: #222; color: #bada55');
+                        setFlightData(mappedData);
                     });
                 })
                 .catch((err) => console.error("❌ Connection failed: ", err));

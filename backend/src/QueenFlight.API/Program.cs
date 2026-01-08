@@ -25,7 +25,11 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Conn
 builder.Services.AddSingleton<IFlightCache, RedisFlightCache>();
 
 // Register SignalR
-builder.Services.AddSignalR()
+builder.Services.AddSignalR(hubOptions =>
+{
+    hubOptions.MaximumReceiveMessageSize = 10 * 1024 * 1024; // 10MB
+    hubOptions.EnableDetailedErrors = true;
+})
     .AddMessagePackProtocol();
 
 builder.Services.AddSingleton<IFlightBroadcaster, QueenFlight.API.Services.SignalRFlightBroadcaster>();

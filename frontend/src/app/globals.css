@@ -18,12 +18,9 @@
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
+  background: linear-gradient(to bottom,
       transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+      rgb(var(--background-end-rgb))) rgb(var(--background-start-rgb));
 }
 
 /* Mapbox Marker Styles */
@@ -32,5 +29,9 @@ body {
   border: none;
   cursor: pointer;
   padding: 0;
-  transition: transform 0.2s; /* Smooth rotation */
+  width: 24px;
+  height: 24px;
+  /* Ensure it has a z-index if needed, though Mapbox handles this */
+  transition: transform 0.2s;
+  /* Smooth rotation */
 }
