@@ -23,51 +23,69 @@ export function useFlightSignalR() {
         const newConnection = new signalR.HubConnectionBuilder()
             .withUrl(HUB_URL)
             .withAutomaticReconnect()
-            .configureLogging(signalR.LogLevel.Information)
+            .configureLogging(signalR.LogLevel.Information) // Enable built-in SignalR logs
             .build();
 
         setConnection(newConnection);
-    }, []);
 
-    useEffect(() => {
-        if (connection) {
-            connection
-                .start()
-                .then(() => {
-                    console.log("📡 Connected to FlightHub");
-                    setIsConnected(true);
+        // Lifecycle Logs
+        newConnection.onreconnecting(error => {
+            console.warn(`%c ⚠️ Connection lost. Reconnecting... Error: ${error}`, 'color: orange; font-weight: bold;');
+            setIsConnected(false);
+        });
 
-                    // Subscribe to 'GlobalFlightData' group if required by Backend
-                    connection.invoke("SubscribeToUpdates").catch((err) => console.error(err));
+        newConnection.onreconnected(connectionId => {
+            console.log(`%c ✅ Connection reestablished. ID: ${connectionId}`, 'color: green; font-weight: bold;');
+            setIsConnected(true);
+            // Re-subscribe just in case
+            newConnection.invoke("SubscribeToUpdates").catch(err => console.error("❌ Re-subscribe failed", err));
+        });
 
-                    connection.on("ReceiveFlightData", (data: any[]) => {
-                        // For high-frequency updates, we might want to avoid setState here directly
-                        // But for 120s polling, this is fine.
-                        if (data.length > 0) {
-                            console.log("📦 Sample Data Item:", data[0]);
-                        }
+        newConnection.onclose(error => {
+            console.error(`%c ❌ Connection closed permanently. Error: ${error}`, 'color: red; font-weight: bold;');
+            setIsConnected(false);
+        });
 
-                        // Mapping if needed (in case Backend sends different casing)
-                        const mappedData = data.map((d: any) => ({
-                            icao24: d.icao24 || d.Icao24,
-                            lat: d.lat || d.Lat,
-                            lng: d.lng || d.Lng,
-                            heading: d.heading || d.Heading,
-                            velocity: d.velocity || d.Velocity,
-                            serverTimestamp: d.serverTimestamp || d.ServerTimestamp
-                        }));
+        console.log(`%c 🔌 Starting SignalR connection to: ${HUB_URL}`, 'color: cyan');
 
-                        console.log(`%c ✈️ Received ${mappedData.length} flights! (Sample: ${mappedData[0]?.icao24})`, 'background: #222; color: #bada55');
-                        setFlightData(mappedData);
-                    });
-                })
-                .catch((err) => console.error("❌ Connection failed: ", err));
+        newConnection.start()
+            .then(() => {
+                console.log("%c ✅ SignalR Connected Successfully!", 'color: lime; font-weight: bold; font-size: 14px');
+                setIsConnected(true);
 
-            return () => {
-                connection.stop();
-            };
-        }
-    }, [connection]);
+                // Subscribe to 'GlobalFlightData' group if required by Backend
+                newConnection.invoke("SubscribeToUpdates")
+                    .then(() => console.log("%c 🔔 Subscribed to GlobalFlightData", 'color: cyan'))
+                    .catch((err) => console.error("❌ Subscribe failed:", err));
+
+                newConnection.on("ReceiveFlightData", (data: any[]) => {
+                    console.log(`%c 📥 RAW EVENT RECEIVED. Items: ${data?.length}`, 'background: #333; color: #fff');
+
+                    // For high-frequency updates, we might want to avoid setState here directly
+                    // But for 120s polling, this is fine.
+                    if (data?.length > 0) {
+                        console.log("📦 Sample Data Item:", data[0]);
+                    }
+
+                    // Mapping if needed (in case Backend sends different casing)
+                    const mappedData = data.map((d: any) => ({
+                        icao24: d.icao24 || d.Icao24,
+                        lat: d.lat || d.Lat,
+                        lng: d.lng || d.Lng,
+                        heading: d.heading || d.Heading,
+                        velocity: d.velocity || d.Velocity,
+                        serverTimestamp: d.serverTimestamp || d.ServerTimestamp
+                    }));
+
+                    setFlightData(mappedData);
+                });
+            })
+            .catch((err) => console.error("❌ Connection failed to start: ", err));
+
+        return () => {
+            newConnection.stop();
+        };
+    }, []); // Empty dependency array to run once on mount
 
     return { flightData, isConnected };
 }
