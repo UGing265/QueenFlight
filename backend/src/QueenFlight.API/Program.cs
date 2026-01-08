@@ -25,10 +25,22 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Conn
 builder.Services.AddSingleton<IFlightCache, RedisFlightCache>();
 
 // Register SignalR
-builder.Services.AddSignalR().AddJsonProtocol(options => {
-    options.PayloadSerializerOptions.PropertyNamingPolicy = null; // Keep PascalCase/camelCase as is or standard
-});
+builder.Services.AddSignalR()
+    .AddMessagePackProtocol();
+
 builder.Services.AddSingleton<IFlightBroadcaster, QueenFlight.API.Services.SignalRFlightBroadcaster>();
+
+// Add CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("ClientPermission", policy =>
+    {
+        policy.AllowAnyHeader()
+              .AllowAnyMethod()
+              .WithOrigins("http://localhost:3000") // Next.js default port
+              .AllowCredentials();
+    });
+});
 
 var app = builder.Build();
 
@@ -39,6 +51,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors("ClientPermission");
 
 // Minimal API endpoints will be replaced by Controllers/Hubs later
 app.MapControllers();

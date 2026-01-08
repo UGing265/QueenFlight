@@ -3,5 +3,5 @@ namespace QueenFlight.Core.Interfaces;
 public interface IFlightBroadcaster
 {
     Task BroadcastFlightCountAsync(int count);
-    // Future: Task BroadcastUpdatesAsync(List<FlightState> flights);
+    Task BroadcastFlightDataAsync(List<QueenFlight.Core.DTOs.FlightPayloadDto> flights);
 }

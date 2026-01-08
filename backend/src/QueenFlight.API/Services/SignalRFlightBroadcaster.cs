@@ -15,6 +15,12 @@ public class SignalRFlightBroadcaster : IFlightBroadcaster
 
     public async Task BroadcastFlightCountAsync(int count)
     {
-        await _hubContext.Clients.Group("GlobalFlightData").SendAsync("ReceiveFlightUpdate", count);
+        await _hubContext.Clients.Group("GlobalFlightData").SendAsync("ReceiveFlightCount", count);
+    }
+
+    public async Task BroadcastFlightDataAsync(List<QueenFlight.Core.DTOs.FlightPayloadDto> flights)
+    {
+        // "ReceiveFlightUpdate" is the method name the Client listens to
+        await _hubContext.Clients.Group("GlobalFlightData").SendAsync("ReceiveFlightUpdate", flights);
     }
 }
