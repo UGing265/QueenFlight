@@ -1,0 +1,6 @@
+# SETUP INSTRUCTIONS
+# 1. Create a file named ".env.local" in this directory (frontend).
+# 2. Paste the following content into it:
+
+NEXT_PUBLIC_MAPBOX_TOKEN=PASTE_YOUR_TOKEN_HERE
+NEXT_PUBLIC_API_URL=http://localhost:5000
