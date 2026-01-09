@@ -48,59 +48,92 @@ export default function MapContainer() {
 
     }, []);
 
-    // 2. Update Markers when Flight Data changes
+    // 2. Add Sources & Layers on Load
     useEffect(() => {
-        if (!map.current) {
-            console.warn("⚠️ Map not initialized yet, skipping marker update");
-            return;
+        if (!map.current) return;
+
+        const onMapLoad = () => {
+            if (!map.current) return;
+
+            // Load an aircraft icon (using an external reliable icon or generated)
+            map.current.loadImage(
+                'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Airplane_silhouette.svg/2048px-Airplane_silhouette.svg.png',
+                (error, image) => {
+                    if (error) {
+                        console.error("Could not load flight icon", error);
+                        return;
+                    }
+                    if (!map.current?.hasImage('plane-icon')) {
+                        map.current?.addImage('plane-icon', image!, { sdf: true }); // SDF allows color changing
+                    }
+
+                    // Add GeoJSON Source
+                    if (!map.current?.getSource('flights')) {
+                        map.current?.addSource('flights', {
+                            type: 'geojson',
+                            data: {
+                                type: 'FeatureCollection',
+                                features: []
+                            }
+                        });
+                    }
+
+                    // Add Layer
+                    if (!map.current?.getLayer('flights-layer')) {
+                        map.current?.addLayer({
+                            id: 'flights-layer',
+                            source: 'flights',
+                            type: 'symbol',
+                            layout: {
+                                'icon-image': 'plane-icon',
+                                'icon-size': 0.02, // Adjust based on original image size (2048px is huge)
+                                'icon-rotate': ['get', 'rotation'],
+                                'icon-allow-overlap': true,
+                                'icon-ignore-placement': true
+                            },
+                            paint: {
+                                'icon-color': '#4ade80', // Green
+                                'icon-halo-color': '#000000',
+                                'icon-halo-width': 1
+                            }
+                        });
+                    }
+                });
+        };
+
+        if (map.current.loaded()) {
+            onMapLoad();
+        } else {
+            map.current.on('load', onMapLoad);
         }
 
-        console.log(`🗺️ Rendering markers for ${flightData.length} flights...`);
-        const currentFlightIds = new Set<string>();
+    }, []); // Run once on mount (after map init scope)
 
-        flightData.forEach((flight) => {
-            currentFlightIds.add(flight.icao24);
+    // 3. Update GeoJSON Data
+    useEffect(() => {
+        if (!map.current || !map.current.getSource('flights')) return;
 
-            // Check if marker exists
-            let marker = markersRef.current.get(flight.icao24);
-
-            if (!marker) {
-                // Debug log for first marker creation
-                if (markersRef.current.size === 0) {
-                    console.log(`📍 Creating first marker for ${flight.icao24} at [${flight.lng}, ${flight.lat}]`);
-                }
-
-                // Create new marker element
-                const el = document.createElement('div');
-                el.className = 'flight-marker';
-                // Explicitly set size here just in case CSS fails
-                el.style.width = '24px';
-                el.style.height = '24px';
-
-                el.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 0 4px #4ade80);"><path d="M2 12h20"/><path d="M13 2l9 10-9 10"/><path d="M7 6l4 6-4 6"/></svg>`;
-
-                marker = new mapboxgl.Marker({ element: el, rotation: flight.heading })
-                    .setLngLat([flight.lng, flight.lat])
-                    .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`<b>${flight.icao24}</b><br>Speed: ${flight.velocity} km/h`))
-                    .addTo(map.current!);
-
-                markersRef.current.set(flight.icao24, marker);
-            } else {
-                // Update position
-                marker.setLngLat([flight.lng, flight.lat]);
-                marker.setRotation(flight.heading);
+        const features: GeoJSON.Feature[] = flightData.map(flight => ({
+            type: 'Feature',
+            geometry: {
+                type: 'Point',
+                coordinates: [flight.lng, flight.lat]
+            },
+            properties: {
+                id: flight.icao24,
+                rotation: flight.heading,
+                velocity: flight.velocity
             }
-        });
+        }));
 
-        console.log(`✅ Total markers on map: ${markersRef.current.size}`);
-
-        // Cleanup stale markers
-        markersRef.current.forEach((marker, id) => {
-            if (!currentFlightIds.has(id)) {
-                marker.remove();
-                markersRef.current.delete(id);
-            }
-        });
+        const source = map.current.getSource('flights') as mapboxgl.GeoJSONSource;
+        if (source) {
+            source.setData({
+                type: 'FeatureCollection',
+                features: features
+            });
+            console.log(`🚀 WebGL: Updated ${features.length} points on GPU`);
+        }
 
     }, [flightData]);
 
