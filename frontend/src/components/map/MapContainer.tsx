@@ -15,7 +15,7 @@ if (MAPBOX_TOKEN) {
 export default function MapContainer() {
     const mapContainer = useRef<HTMLDivElement>(null);
     const map = useRef<mapboxgl.Map | null>(null);
-    const markersRef = useRef<Map<string, mapboxgl.Marker>>(new Map());
+    
 
     const { flightData, isConnected } = useFlightSignalR();
 
