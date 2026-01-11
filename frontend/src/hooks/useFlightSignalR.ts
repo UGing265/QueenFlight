@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import * as signalR from "@microsoft/signalr";
+import { MessagePackHubProtocol } from "@microsoft/signalr-protocol-msgpack";
 
 const HUB_URL = process.env.NEXT_PUBLIC_API_URL + "/flighthub";
 
@@ -23,6 +24,7 @@ export function useFlightSignalR() {
         const newConnection = new signalR.HubConnectionBuilder()
             .withUrl(HUB_URL)
             .withAutomaticReconnect()
+            .withHubProtocol(new MessagePackHubProtocol()) // Enable Binary Protocol
             .configureLogging(signalR.LogLevel.Information) // Enable built-in SignalR logs
             .build();
 
