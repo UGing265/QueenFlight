@@ -3,32 +3,50 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace QueenFlight.Core.Entities;
 
+[Table("airports")]
 public class Airport
 {
     [Key]
+    [StringLength(15)]
+    [Column("ident")]
+    public required string Ident { get; set; }
+
+    private string? _iataCode;
     [StringLength(3)]
-    public required string IataCode { get; set; } // SGN
+    [Column("iata_code")]
+    public string? IataCode
+    {
+        get => _iataCode;
+        set => _iataCode = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    }
 
+    private string? _icaoCode;
     [StringLength(4)]
-    public string? IcaoCode { get; set; } // VVTS
+    [Column("icao_code")]
+    public string? IcaoCode
+    {
+        get => _icaoCode;
+        set => _icaoCode = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    }
 
-    [StringLength(100)]
+    [StringLength(255)]
+    [Column("name")]
     public string? Name { get; set; }
 
     [StringLength(100)]
+    [Column("city")]
     public string? City { get; set; }
 
     [StringLength(2)]
+    [Column("country_code")]
     public string? CountryCode { get; set; }
+    
     [ForeignKey("CountryCode")]
     public Country? Country { get; set; }
 
-    [Column(TypeName = "decimal(9,6)")]
+    [Column("latitude", TypeName = "decimal(9,6)")]
     public decimal? Latitude { get; set; }
 
-    [Column(TypeName = "decimal(9,6)")]
+    [Column("longitude", TypeName = "decimal(9,6)")]
     public decimal? Longitude { get; set; }
-
-    [StringLength(50)]
-    public string? Timezone { get; set; }
 }
