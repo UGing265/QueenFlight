@@ -29,7 +29,7 @@ public class Airport
         set => _icaoCode = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 
-    [StringLength(100)]
+    [StringLength(255)]
     [Column("name")]
     public string? Name { get; set; }
 
