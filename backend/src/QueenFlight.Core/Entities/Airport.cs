@@ -11,13 +11,23 @@ public class Airport
     [Column("ident")]
     public required string Ident { get; set; }
 
+    private string? _iataCode;
     [StringLength(3)]
     [Column("iata_code")]
-    public string? IataCode { get; set; }
+    public string? IataCode
+    {
+        get => _iataCode;
+        set => _iataCode = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    }
 
+    private string? _icaoCode;
     [StringLength(4)]
     [Column("icao_code")]
-    public string? IcaoCode { get; set; }
+    public string? IcaoCode
+    {
+        get => _icaoCode;
+        set => _icaoCode = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    }
 
     [StringLength(100)]
     [Column("name")]

@@ -11,7 +11,7 @@ using QueenFlight.Infrastructure.Data;
 
 namespace QueenFlight.Infrastructure.Migrations
 {
-    [DbContext(typeof(ApplicationDbContext))]
+    [DbContext(typeof(AppDbContext))]
     [Migration("20260112044844_ApplySnakeCaseSchema")]
     partial class ApplySnakeCaseSchema
     {
