@@ -143,7 +143,8 @@ public class FlightDataService : BackgroundService
             if (payloads.Count > 0)
             {
                  await _broadcaster.BroadcastFlightDataAsync(payloads);
-                 _logger.LogInformation($"📡 Broadcasted {payloads.Count} flight payloads via SignalR.");
+                 var samples = string.Join(", ", payloads.Take(5).Select(p => p.Icao24));
+                 _logger.LogInformation($"📡 Broadcaster: Sending {payloads.Count} flights. First 5: [{samples} ...]");
             }
         }
         catch (OperationCanceledException) { }
