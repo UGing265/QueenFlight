@@ -4,6 +4,7 @@ using QueenFlight.Infrastructure.Interfaces;
 using QueenFlight.Core.Interfaces;
 using QueenFlight.Infrastructure.Services;
 using StackExchange.Redis;
+using QueenFlight.Infrastructure.ExternalServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +19,10 @@ builder.Services.AddControllers();
 // Register Worker Service
 builder.Services.AddHttpClient();
 builder.Services.AddHostedService<FlightDataService>();
+
+// Register Domain Services
+builder.Services.AddScoped<IAirLabsClient, AirLabsClient>();
+builder.Services.AddScoped<IFlightDetailsProvider, FlightDetailsProvider>();
 
 // Register Redis
 var redisConnection = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
