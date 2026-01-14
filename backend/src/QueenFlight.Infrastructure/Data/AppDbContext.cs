@@ -114,6 +114,12 @@ public class AppDbContext : DbContext
                 .WithOne() // 1-to-1
                 .HasForeignKey<UserPreference>(d => d.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasOne(d => d.HomeAirport)
+                .WithMany()
+                .HasForeignKey(d => d.HomeAirportIata)
+                .HasPrincipalKey(a => a.IataCode); // Point to IataCode, not Ident
+
         });
     }
 }

@@ -20,7 +20,9 @@ public class UserPreference
     [StringLength(3)]
     [Column("home_airport_iata")]
     public string? HomeAirportIata { get; set; }
-    // Optional FK to Airport could be added if strict integrity needed, but schema just says ref > airports.iata_code
+    
+    [ForeignKey("HomeAirportIata")]
+    public Airport? HomeAirport { get; set; }
 
     [Column("show_weather")]
     public bool ShowWeather { get; set; } = false;
