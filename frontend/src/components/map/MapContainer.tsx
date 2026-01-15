@@ -4,7 +4,9 @@ import React, { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { useFlightSignalR, FlightPayload } from "@/hooks/useFlightSignalR";
+import { useInterpolation } from "@/hooks/useInterpolation";
 import { Plane } from "lucide-react";
+import FlightDetailModal from "../FlightDetailModal";
 
 // Ensure token is present
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || "";
@@ -16,10 +18,13 @@ export default function MapContainer() {
     const mapContainer = useRef<HTMLDivElement>(null);
     const map = useRef<mapboxgl.Map | null>(null);
 
-
     const [isMapReady, setIsMapReady] = useState(false);
+    const [selectedFlight, setSelectedFlight] = useState<string | null>(null);
 
     const { flightData, isConnected } = useFlightSignalR();
+
+    // 🔥 Piped flightData through Physics Engine (Dead Reckoning)
+    const interpolatedFlights = useInterpolation(flightData);
 
     // 1. Initialize Map
     useEffect(() => {
@@ -57,9 +62,6 @@ export default function MapContainer() {
                 (error, image) => {
                     if (error) {
                         console.error("Could not load flight icon", error);
-                        // Even if image fails, we should set ready so map works (maybe without icons or fallback)
-                        // But here we return to avoid adding layer referring to missing image
-                        // Better practice: Use a fallback or proceed. 
                     }
                     if (!map.current?.hasImage('plane-icon') && image) {
                         map.current?.addImage('plane-icon', image, { sdf: true });
@@ -85,7 +87,7 @@ export default function MapContainer() {
                             layout: {
                                 'icon-image': 'plane-icon', // Refers to the image added above
                                 'icon-size': 0.02,
-                                'icon-rotate': ['get', 'rotation'],
+                                'icon-rotate': ['+', ['get', 'rotation'], 90],
                                 'icon-allow-overlap': true,
                                 'icon-ignore-placement': true
                             },
@@ -93,6 +95,26 @@ export default function MapContainer() {
                                 'icon-color': '#4ade80',
                                 'icon-halo-color': '#000000',
                                 'icon-halo-width': 1
+                            }
+                        });
+
+                        // Add Interactivity: Cursor & Click
+                        map.current?.on('mouseenter', 'flights-layer', () => {
+                            if (map.current) map.current.getCanvas().style.cursor = 'pointer';
+                        });
+
+                        map.current?.on('mouseleave', 'flights-layer', () => {
+                            if (map.current) map.current.getCanvas().style.cursor = '';
+                        });
+
+                        map.current?.on('click', 'flights-layer', (e) => {
+                            if (e.features && e.features.length > 0) {
+                                const feature = e.features[0];
+                                const icao24 = feature.properties?.id;
+                                if (icao24) {
+                                    console.log("✈ Clicked Plane:", icao24);
+                                    setSelectedFlight(icao24);
+                                }
                             }
                         });
                     }
@@ -104,11 +126,12 @@ export default function MapContainer() {
 
     }, []);
 
-    // 2. Update GeoJSON Data (Depends on flightData AND isMapReady)
+    // 2. Update GeoJSON Data (Depends on interpolatedFlights AND isMapReady)
+    // Run loop 60fps (actually useInterpolation runs 60fps and updates state, triggering this effect)
     useEffect(() => {
         if (!isMapReady || !map.current || !map.current.getSource('flights')) return;
 
-        const features: GeoJSON.Feature[] = flightData.map(flight => ({
+        const features: GeoJSON.Feature[] = interpolatedFlights.map(flight => ({
             type: 'Feature',
             geometry: {
                 type: 'Point',
@@ -121,16 +144,17 @@ export default function MapContainer() {
             }
         }));
 
+        // Console log removed to reduce spam in production-like loop
+
         const source = map.current.getSource('flights') as mapboxgl.GeoJSONSource;
         if (source) {
             source.setData({
                 type: 'FeatureCollection',
                 features: features
             });
-            console.log(`🚀 WebGL: Updated ${features.length} points on GPU`);
         }
 
-    }, [flightData, isMapReady]); // Re-run when map becomes ready
+    }, [interpolatedFlights, isMapReady]);
 
     return (
         <div className="relative w-full h-screen">
@@ -139,7 +163,16 @@ export default function MapContainer() {
                     📡 Connecting to Live Air Traffic...
                 </div>
             )}
+
             <div ref={mapContainer} className="w-full h-full" />
+
+            {/* Modal Layer */}
+            {selectedFlight && (
+                <FlightDetailModal
+                    icao24={selectedFlight}
+                    onClose={() => setSelectedFlight(null)}
+                />
+            )}
         </div>
     );
 }
