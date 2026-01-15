@@ -25,8 +25,16 @@ builder.Services.AddScoped<IAirLabsClient, AirLabsClient>();
 builder.Services.AddScoped<IFlightDetailsProvider, FlightDetailsProvider>();
 
 // Register Redis
-var redisConnection = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
-builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisConnection));
+// Register Redis
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    var configuration = sp.GetRequiredService<IConfiguration>();
+    var redisConnection = configuration.GetConnectionString("Redis") ?? "localhost:6379";
+    // Using Lazy or just returning Connect here (triggered only when injected)
+    // Note: If Redis is down, this will still throw when a service requests IConnectionMultiplexer.
+    // However, migrations might not request it if they only need DbContext.
+    return ConnectionMultiplexer.Connect(redisConnection);
+});
 builder.Services.AddSingleton<IFlightCache, RedisFlightCache>();
 
 // Register SignalR

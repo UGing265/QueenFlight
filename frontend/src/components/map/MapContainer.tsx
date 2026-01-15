@@ -15,7 +15,9 @@ if (MAPBOX_TOKEN) {
 export default function MapContainer() {
     const mapContainer = useRef<HTMLDivElement>(null);
     const map = useRef<mapboxgl.Map | null>(null);
-    
+
+
+    const [isMapReady, setIsMapReady] = useState(false);
 
     const { flightData, isConnected } = useFlightSignalR();
 
@@ -33,38 +35,34 @@ export default function MapContainer() {
             style: "mapbox://styles/mapbox/dark-v11",
             center: [106.79, 10.84], // hcm 
             zoom: 10,
-            projection: 'globe' // Globe view for aesthetic
+            projection: 'globe'
         });
 
+        // Initialize Fog
         map.current.on('style.load', () => {
             map.current?.setFog({
-                color: 'rgb(186, 210, 235)', // Lower atmosphere
-                'high-color': 'rgb(36, 92, 223)', // Upper atmosphere
-                'horizon-blend': 0.02, // Atmosphere thickness (default 0.2 at low zooms)
-                'space-color': 'rgb(11, 11, 25)', // Background color
-                'star-intensity': 0.6 // Background star brightness (default 0.35 at low zooms )
+                color: 'rgb(186, 210, 235)',
+                'high-color': 'rgb(36, 92, 223)',
+                'horizon-blend': 0.02,
+                'space-color': 'rgb(11, 11, 25)',
+                'star-intensity': 0.6
             });
         });
 
-    }, []);
-
-    // 2. Add Sources & Layers on Load
-    useEffect(() => {
-        if (!map.current) return;
-
-        const onMapLoad = () => {
-            if (!map.current) return;
-
-            // Load an aircraft icon (using an external reliable icon or generated)
-            map.current.loadImage(
+        // Initialize Sources & Layers
+        map.current.on('load', () => {
+            // Load an aircraft icon
+            map.current?.loadImage(
                 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Airplane_silhouette.svg/2048px-Airplane_silhouette.svg.png',
                 (error, image) => {
                     if (error) {
                         console.error("Could not load flight icon", error);
-                        return;
+                        // Even if image fails, we should set ready so map works (maybe without icons or fallback)
+                        // But here we return to avoid adding layer referring to missing image
+                        // Better practice: Use a fallback or proceed. 
                     }
-                    if (!map.current?.hasImage('plane-icon')) {
-                        map.current?.addImage('plane-icon', image!, { sdf: true }); // SDF allows color changing
+                    if (!map.current?.hasImage('plane-icon') && image) {
+                        map.current?.addImage('plane-icon', image, { sdf: true });
                     }
 
                     // Add GeoJSON Source
@@ -85,33 +83,30 @@ export default function MapContainer() {
                             source: 'flights',
                             type: 'symbol',
                             layout: {
-                                'icon-image': 'plane-icon',
-                                'icon-size': 0.02, // Adjust based on original image size (2048px is huge)
+                                'icon-image': 'plane-icon', // Refers to the image added above
+                                'icon-size': 0.02,
                                 'icon-rotate': ['get', 'rotation'],
                                 'icon-allow-overlap': true,
                                 'icon-ignore-placement': true
                             },
                             paint: {
-                                'icon-color': '#4ade80', // Green
+                                'icon-color': '#4ade80',
                                 'icon-halo-color': '#000000',
                                 'icon-halo-width': 1
                             }
                         });
                     }
+
+                    // Mark map as ready only after source/layer are added
+                    setIsMapReady(true);
                 });
-        };
+        });
 
-        if (map.current.loaded()) {
-            onMapLoad();
-        } else {
-            map.current.on('load', onMapLoad);
-        }
+    }, []);
 
-    }, []); // Run once on mount (after map init scope)
-
-    // 3. Update GeoJSON Data
+    // 2. Update GeoJSON Data (Depends on flightData AND isMapReady)
     useEffect(() => {
-        if (!map.current || !map.current.getSource('flights')) return;
+        if (!isMapReady || !map.current || !map.current.getSource('flights')) return;
 
         const features: GeoJSON.Feature[] = flightData.map(flight => ({
             type: 'Feature',
@@ -135,7 +130,7 @@ export default function MapContainer() {
             console.log(`🚀 WebGL: Updated ${features.length} points on GPU`);
         }
 
-    }, [flightData]);
+    }, [flightData, isMapReady]); // Re-run when map becomes ready
 
     return (
         <div className="relative w-full h-screen">

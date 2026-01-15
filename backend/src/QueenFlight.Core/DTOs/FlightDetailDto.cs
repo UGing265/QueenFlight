@@ -17,6 +17,7 @@ public class FlightDetailDto
     public string? ModelCode { get; set; }
     public string? ImageUrl { get; set; } 
     
+    // Flight Info using IATA codes cause IATA are friendly for users
     public string? OriginAirport { get; set; }
     public string? DestinationAirport { get; set; }
         

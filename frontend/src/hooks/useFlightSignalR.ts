@@ -60,6 +60,11 @@ export function useFlightSignalR() {
                     .then(() => console.log("%c 🔔 Subscribed to GlobalFlightData", 'color: cyan'))
                     .catch((err) => console.error("❌ Subscribe failed:", err));
 
+                newConnection.on("ReceiveFlightCount", (count: number) => {
+                    // We can expose this if needed, for now just log debug or ignore to suppress warning
+                    // console.debug("Active Flights:", count);
+                });
+
                 newConnection.on("ReceiveFlightData", (data: any[]) => {
                     console.log(`%c 📥 RAW EVENT RECEIVED. Items: ${data?.length}`, 'background: #333; color: #fff');
 
@@ -69,14 +74,15 @@ export function useFlightSignalR() {
                         console.log("📦 Sample Data Item:", data[0]);
                     }
 
-                    // Mapping if needed (in case Backend sends different casing)
+                    // Mapping based on MessagePack keys (DTOs/FlightPayloadDto.cs)
+                    // i = Icao24, la = Lat, lo = Lng, v = Velocity, h = Heading, ts = timestamp
                     const mappedData = data.map((d: any) => ({
-                        icao24: d.icao24 || d.Icao24,
-                        lat: d.lat || d.Lat,
-                        lng: d.lng || d.Lng,
-                        heading: d.heading || d.Heading,
-                        velocity: d.velocity || d.Velocity,
-                        serverTimestamp: d.serverTimestamp || d.ServerTimestamp
+                        icao24: d.i || d.Icao24 || d.icao24,
+                        lat: d.la || d.Lat || d.lat,
+                        lng: d.lo || d.Lng || d.lng,
+                        heading: d.h || d.Heading || d.heading,
+                        velocity: d.v || d.Velocity || d.velocity,
+                        serverTimestamp: d.ts || d.ServerTimestamp || d.serverTimestamp
                     }));
 
                     setFlightData(mappedData);
