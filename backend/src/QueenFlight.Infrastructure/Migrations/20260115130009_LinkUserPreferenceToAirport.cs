@@ -10,6 +10,9 @@ namespace QueenFlight.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            // Clean up invalid data before applying constraints
+            migrationBuilder.Sql("DELETE FROM airports WHERE iata_code IS NULL OR TRIM(iata_code) = '';");
+
             migrationBuilder.AlterColumn<string>(
                 name: "iata_code",
                 table: "airports",

@@ -35,17 +35,17 @@ export default function MapContainer() {
             style: "mapbox://styles/mapbox/dark-v11",
             center: [106.79, 10.84], // hcm 
             zoom: 10,
-            projection: 'globe'
+            projection: 'globe' // Globe view for aesthetic
         });
 
         // Initialize Fog
         map.current.on('style.load', () => {
             map.current?.setFog({
-                color: 'rgb(186, 210, 235)',
-                'high-color': 'rgb(36, 92, 223)',
-                'horizon-blend': 0.02,
-                'space-color': 'rgb(11, 11, 25)',
-                'star-intensity': 0.6
+                color: 'rgb(186, 210, 235)', // Lower atmosphere
+                'high-color': 'rgb(36, 92, 223)', // Upper atmosphere
+                'horizon-blend': 0.02, // Atmosphere thickness (default 0.2 at low zooms)
+                'space-color': 'rgb(11, 11, 25)', // Background color
+                'star-intensity': 0.6 // Background star brightness (default 0.35 at low zooms )
             });
         });
 
