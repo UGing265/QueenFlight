@@ -37,7 +37,7 @@ export default function FlightDetailModal({ icao24, onClose }: FlightDetailModal
             setData(null);
 
             try {
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/flights/${icao24}`);
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/flights/${icao24}`);
                 if (!response.ok) {
                     throw new Error("Failed to fetch flight details");
                 }
