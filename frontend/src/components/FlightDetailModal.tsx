@@ -1,4 +1,4 @@
-import { X, Plane, ExternalLink, MapPin } from "lucide-react";
+import { X, Plane, ExternalLink, MapPin, Wind, Navigation } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface FlightDetailDto {
@@ -57,127 +57,128 @@ export default function FlightDetailModal({ icao24, onClose }: FlightDetailModal
     if (!icao24) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={onClose}>
-            {/* Modal Content - Stop propagation to prevent closing when clicking inside */}
-            <div
-                className="relative w-full max-w-md bg-slate-900/90 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden text-slate-100"
-                onClick={(e) => e.stopPropagation()}
-            >
-                {/* Header */}
-                <div className="relative h-32 bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 flex items-center justify-center overflow-hidden">
-                    {/* Background Pattern */}
-                    <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
+        // SIDEBAR COMPONENT
+        // CRITICAL: USING INLINE STYLES FOR EVERYTHING TO BYPASS TAILWIND FAILURE
+        <div
+            style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '400px', // Fixed width
+                height: '100vh',
+                zIndex: 999999,
+                backgroundColor: 'rgba(15, 23, 42, 0.95)', // Slate-900 equivalent
+                color: 'white',
+                borderRight: '1px solid #334155',
+                display: 'flex',
+                flexDirection: 'column',
+                boxShadow: '10px 0 30px rgba(0,0,0,0.5)'
+            }}
+        >
+            {/* Header Area */}
+            <div style={{ padding: '20px', background: '#1e293b', borderBottom: '1px solid #334155', position: 'relative' }}>
+                <button
+                    onClick={onClose}
+                    style={{ position: 'absolute', top: '10px', right: '10px', background: '#ef4444', color: 'white', border: 'none', padding: '5px 10px', cursor: 'pointer', borderRadius: '4px' }}
+                >
+                    CLOSE X
+                </button>
 
-                    <button
-                        onClick={onClose}
-                        className="absolute top-3 right-3 p-2 bg-black/20 hover:bg-black/40 rounded-full transition-colors"
-                    >
-                        <X size={20} className="text-white" />
-                    </button>
-
-                    {loading ? (
-                        <div className="animate-pulse flex flex-col items-center">
-                            <div className="h-4 w-24 bg-white/20 rounded mb-2"></div>
-                            <div className="h-8 w-32 bg-white/20 rounded"></div>
-                        </div>
-                    ) : (data && (
-                        <div className="text-center z-10">
-                            {data.airlineLogoUrl ? (
-                                <img src={data.airlineLogoUrl} alt="Logo" className="h-12 object-contain mx-auto mb-2 drop-shadow-lg" />
-                            ) : (
-                                <Plane size={40} className="mx-auto mb-2 text-blue-400" />
-                            )}
-                            <h2 className="text-2xl font-bold tracking-wider">{data.callsign || data.icao24.toUpperCase()}</h2>
-                            {data.airlineName && <p className="text-sm text-blue-200">{data.airlineName}</p>}
-                        </div>
-                    ))}
-                </div>
-
-                {/* Body */}
-                <div className="p-6 space-y-4">
-                    {loading ? (
-                        <SkeletonLoader />
-                    ) : error ? (
-                        <div className="text-center py-6 text-red-400 bg-red-900/10 rounded-xl">
-                            <p>{error}</p>
-                        </div>
-                    ) : (data && (
-                        <>
-                            {/* Route Info */}
-                            <div className="flex items-center justify-between bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
-                                <div className="text-center">
-                                    <p className="text-xs text-slate-400 mb-1">ORIGIN</p>
-                                    <p className="text-xl font-bold text-green-400">{data.originAirport || "N/A"}</p>
-                                </div>
-                                <div className="flex-1 px-4 flex flex-col items-center">
-                                    <Plane className="text-slate-500 rotate-90" size={16} />
-                                    <div className="w-full h-px bg-slate-600 my-2 relative">
-                                        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-1 h-1 bg-slate-400 rounded-full"></div>
-                                    </div>
-                                    <p className="text-[10px] text-slate-500">{data.isEnriched ? "Live Data" : "Estimating"}</p>
-                                </div>
-                                <div className="text-center">
-                                    <p className="text-xs text-slate-400 mb-1">DESTINATION</p>
-                                    <p className="text-xl font-bold text-amber-400">{data.destinationAirport || "N/A"}</p>
-                                </div>
+                {/* Top Level Info */}
+                <div style={{ marginTop: '20px' }}>
+                    <div>
+                        {loading ? (
+                            <div style={{ height: '30px', background: '#334155', width: '100px' }}>Loading...</div>
+                        ) : (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#60a5fa', marginBottom: '8px' }}>
+                                <Plane size={24} />
+                                <span style={{ fontWeight: 'bold', fontSize: '18px' }}>{data?.airlineName || "Private Flight"}</span>
                             </div>
+                        )}
 
-                            {/* Aircraft Info */}
-                            <div className="grid grid-cols-2 gap-3">
-                                <InfoItem label="Registration" value={data.registration || "Unknown"} icon={<ExternalLink size={14} />} />
-                                <InfoItem label="Model" value={data.model || data.modelCode || "Unknown"} />
-                                <InfoItem label="ICAO Code" value={data.icao24} />
-                                <InfoItem label="Altitude" value="-- ft" sub="Coming soon" />
-                            </div>
-
-                            {/* Image Preview (If available) */}
-                            {data.imageUrl && (
-                                <div className="mt-4 rounded-xl overflow-hidden border border-slate-700/50 shadow-lg relative group">
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent transition-opacity group-hover:opacity-60"></div>
-                                    <img src={data.imageUrl} alt="Aircraft" className="w-full h-32 object-cover" />
-                                    <p className="absolute bottom-2 left-3 text-xs text-white/80 font-mono">Photo © AirLabs</p>
-                                </div>
-                            )}
-                        </>
-                    ))}
-                </div>
-
-                {/* Footer status */}
-                {data && !data.isEnriched && (
-                    <div className="bg-amber-900/20 py-2 text-center border-t border-amber-900/30">
-                        <p className="text-xs text-amber-500">⚠ Data populated from public lookup (Not real-time verified)</p>
+                        <h1 style={{ fontSize: '36px', fontWeight: '900', lineHeight: 1 }}>
+                            {loading ? "..." : (data?.callsign || data?.icao24?.toUpperCase())}
+                        </h1>
                     </div>
-                )}
+                </div>
+            </div>
+
+            {/* Scrollable Content */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
+
+                {loading ? <div>Loading Details...</div> : error ? (
+                    <div style={{ color: '#f87171', background: 'rgba(239,68,68,0.1)', padding: '10px', borderRadius: '8px' }}>
+                        {error}
+                    </div>
+                ) : (data && (
+                    <>
+                        {/* Route Card */}
+                        <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '20px', borderRadius: '12px', border: '1px solid rgba(51, 65, 85, 0.5)', marginBottom: '20px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div style={{ textAlign: 'center', width: '33%' }}>
+                                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#4ade80' }}>{data.originAirport || "N/A"}</div>
+                                    <div style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase' }}>Origin</div>
+                                </div>
+                                <div style={{ flex: 1, textAlign: 'center' }}>➔</div>
+                                <div style={{ textAlign: 'center', width: '33%' }}>
+                                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#fbbf24' }}>{data.destinationAirport || "N/A"}</div>
+                                    <div style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase' }}>Dest</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Technical Details */}
+                        <div>
+                            <h3 style={{ fontSize: '12px', fontWeight: 'bold', color: '#64748b', textTransform: 'uppercase', marginBottom: '10px' }}>Flight Details</h3>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                <p>Registration: {data.registration || "Unknown"}</p>
+                                <p>Model: {data.model || data.modelCode}</p>
+                                <p>Altitude: -- ft</p>
+                            </div>
+                        </div>
+                    </>
+                ))}
+            </div>
+
+            {/* Footer */}
+            <div style={{ padding: '15px', borderTop: '1px solid #1e293b', background: 'rgba(15, 23, 42, 0.5)', textAlign: 'center', fontSize: '10px', color: '#475569' }}>
+                <p>ID: {icao24} • QUEENS FLIGHT RADAR</p>
             </div>
         </div>
     );
 }
 
-// Atomic Components (Internal for simplicity)
-function InfoItem({ label, value, sub, icon }: { label: string, value: string, sub?: string, icon?: React.ReactNode }) {
+// Sub-components
+function MiniStat({ label, value, color = "text-slate-200" }: { label: string, value: string, color?: string }) {
     return (
-        <div className="bg-slate-800/40 p-3 rounded-lg border border-slate-700/30 hover:bg-slate-800/60 transition-colors">
-            <div className="flex items-center justify-between mb-1">
-                <p className="text-xs text-slate-400 font-semibold uppercase">{label}</p>
-                {icon && <span className="text-slate-500">{icon}</span>}
+        <div className="text-center p-2 bg-slate-900/50 rounded">
+            <div className="text-[10px] text-slate-500 uppercase">{label}</div>
+            <div className={`text-sm font-semibold ${color}`}>{value}</div>
+        </div>
+    );
+}
+
+function TechRow({ icon, label, value }: { icon: any, label: string, value?: string }) {
+    return (
+        <div className="flex items-center justify-between p-3 bg-slate-800/30 rounded-lg hover:bg-slate-800/50 transition-colors border border-slate-700/20">
+            <div className="flex items-center gap-3 text-slate-400">
+                {icon}
+                <span className="text-sm font-medium">{label}</span>
             </div>
-            <p className="text-sm font-medium text-slate-100 truncate">{value}</p>
-            {sub && <p className="text-[10px] text-slate-500">{sub}</p>}
+            <span className="text-sm text-slate-200 font-mono">{value || "N/A"}</span>
         </div>
     );
 }
 
 function SkeletonLoader() {
     return (
-        <div className="space-y-4 animate-pulse">
-            <div className="h-20 bg-slate-800 rounded-xl"></div>
-            <div className="grid grid-cols-2 gap-3">
-                <div className="h-16 bg-slate-800 rounded-lg"></div>
-                <div className="h-16 bg-slate-800 rounded-lg"></div>
-                <div className="h-16 bg-slate-800 rounded-lg"></div>
-                <div className="h-16 bg-slate-800 rounded-lg"></div>
+        <div className="space-y-4">
+            <div className="h-32 bg-slate-800 rounded-xl animate-pulse"></div>
+            <div className="space-y-2">
+                <div className="h-10 bg-slate-800 rounded animate-pulse"></div>
+                <div className="h-10 bg-slate-800 rounded animate-pulse"></div>
+                <div className="h-10 bg-slate-800 rounded animate-pulse"></div>
             </div>
-            <div className="h-32 bg-slate-800 rounded-xl"></div>
         </div>
     );
 }

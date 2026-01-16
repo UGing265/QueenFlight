@@ -108,12 +108,16 @@ export default function MapContainer() {
                         });
 
                         map.current?.on('click', 'flights-layer', (e) => {
+                            console.log("🖱️ RAW MAP CLICK DETECTED", e);
                             if (e.features && e.features.length > 0) {
                                 const feature = e.features[0];
                                 const icao24 = feature.properties?.id;
+                                console.log("✈ Feature Properties:", feature.properties);
                                 if (icao24) {
-                                    console.log("✈ Clicked Plane:", icao24);
+                                    console.log("✅ Setting Selected Flight:", icao24);
                                     setSelectedFlight(icao24);
+                                } else {
+                                    console.warn("⚠️ Clicked feature but no ID found!");
                                 }
                             }
                         });
@@ -154,7 +158,7 @@ export default function MapContainer() {
             });
         }
 
-    }, [interpolatedFlights, isMapReady]);
+    }, [interpolatedFlights, isMapReady]); // Re-run when interpolation updates positions
 
     return (
         <div className="relative w-full h-screen">
