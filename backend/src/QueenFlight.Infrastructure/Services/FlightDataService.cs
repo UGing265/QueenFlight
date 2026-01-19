@@ -78,7 +78,8 @@ public class FlightDataService : BackgroundService
         }
 
         var client = _httpClientFactory.CreateClient();
-        var url = $"{baseUrl}?api_key={apiKey}"; 
+        // Fix: Append /flights endpoint. Previously it was blindly using BaseUrl.
+        var url = $"{baseUrl}/flights?api_key={apiKey}"; 
         // Note: For MVP we fetch 'global' or default set. 
         // AirLabs allows bounding box: &bbox=... but free tier might have restrictions. 
         // Ideally: &bbox=8.17,102.14,23.39,109.46 (Vietnam)

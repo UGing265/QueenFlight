@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using QueenFlight.Infrastructure.Data;
+using QueenFlight.Infrastructure.Data; // Ensure this is present
 using QueenFlight.Infrastructure.Interfaces;
 using QueenFlight.Core.Interfaces;
 using QueenFlight.Infrastructure.Services;
@@ -23,8 +23,8 @@ builder.Services.AddHostedService<FlightDataService>();
 // Register Domain Services
 builder.Services.AddScoped<IAirLabsClient, AirLabsClient>();
 builder.Services.AddScoped<IFlightDetailsProvider, FlightDetailsProvider>();
+builder.Services.AddScoped<StaticDataSeeder>(); // <-- Register Seeder
 
-// Register Redis
 // Register Redis
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {
@@ -60,6 +60,26 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+// Auto-Seeding & Migration
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var db = services.GetRequiredService<AppDbContext>();
+        db.Database.Migrate();
+
+        // Run Seeder
+        var seeder = services.GetRequiredService<StaticDataSeeder>();
+        await seeder.SeedAsync();
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred during startup migration/seeding.");
+    }
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
