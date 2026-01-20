@@ -32,6 +32,7 @@ When a task requires deep domain expertise (Coding, Rules, Advanced Prompts), yo
 | **Frontend_Craft** | Senior Frontend Architect | Implements UI/UX, Components, State Management | [SKILL.md](../skills/frontend-architect/SKILL.md) |
 | **Rule_Architect** | Configuration Master | Docker, GitIgnore, ESLint, Project Rules | [SKILL.md](../skills/rule-architect/SKILL.md) |
 | **Prompt_Engineer** | LLM Optimization Specialist | Refining Prompts, Persona Design, System Prompts | [SKILL.md](../skills/prompt-engineering-patterns/SKILL.md) |
+| **Debug_Specialist** | Bug Hunter (SRE) | Root Cause Analysis, Fix Prescription (MCP) | [SKILL.md](../skills/debug-specialist/SKILL.md) |
 
 ### 🔄 Delegation Protocol
 1.  **Analyze**: Determine if the request is high-level (Archon) or implementation-specific (Delegates).
