@@ -23,7 +23,7 @@ builder.Services.AddHostedService<FlightDataService>();
 // Register Domain Services
 builder.Services.AddScoped<IAirLabsClient, AirLabsClient>();
 builder.Services.AddScoped<IFlightDetailsProvider, FlightDetailsProvider>();
-builder.Services.AddScoped<StaticDataSeeder>(); // <-- Register Seeder
+// builder.Services.AddScoped<StaticDataSeeder>(); // Removed // <-- Register Seeder
 
 // Register Redis
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
@@ -70,9 +70,9 @@ using (var scope = app.Services.CreateScope())
         var db = services.GetRequiredService<AppDbContext>();
         db.Database.Migrate();
 
-        // Run Seeder
-        var seeder = services.GetRequiredService<StaticDataSeeder>();
-        await seeder.SeedAsync();
+        // Seeder implementation pending CSV pivot
+        // var seeder = services.GetRequiredService<StaticDataSeeder>();
+        // await seeder.SeedAsync();
     }
     catch (Exception ex)
     {
